@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Prefactor ACP",
-  description: "Prefactor Agent Control Plane Demo",
+  title: "Prism",
+  description: "Prism - Competitive Intelligence & Org Mapping Platform",
 };
 
 export default function RootLayout({

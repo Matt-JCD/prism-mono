@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id          String   @id @default(cuid())
+  name        String
+  domain      String   @unique
+  industry    String?
+  subIndustry String?  @map("sub_industry")
+  hq          String?
+  employees   String?
+  founded     String?
+  revenue     String?
+  website     String?
+  tier        String   @default("Prospect")
+  logo        String?
+  linkedinUrl String?  @map("linkedin_url")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  people    Person[]
+  signals   Signal[]
+  ciReports CiReport[]
+
+  @@map("accounts")
+}
+
+model Person {
+  id           String  @id @default(cuid())
+  name         String
+  role         String?
+  department   String?
+  tags         String[] @default([])
+  active       Boolean  @default(true)
+  level        Int      @default(0)
+  linkedinUrl  String?  @map("linkedin_url")
+  email        String?
+  phone        String?
+  attioId      String?  @unique @map("attio_id")
+
+  accountId    String   @map("account_id")
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  reportsToId  String?  @map("reports_to_id")
+  reportsTo    Person?  @relation("OrgHierarchy", fields: [reportsToId], references: [id])
+  reports      Person[] @relation("OrgHierarchy")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("people")
+}
+
+model Signal {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  summary   String
+  severity  String   @default("medium")
+  source    String?
+  url       String?
+  date      DateTime @default(now())
+  read      Boolean  @default(false)
+
+  accountId String   @map("account_id")
+  account   Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("signals")
+}
+
+model CiReport {
+  id           String   @id @default(cuid())
+  domain       String
+  industry     String?
+  subIndustry  String?  @map("sub_industry")
+  hq           String?
+  geography    String[] @default([])
+  status       String   @default("running")
+  summary      Json?
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  accountId    String   @map("account_id")
+  account      Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  competitors  CiCompetitor[]
+
+  @@map("ci_reports")
+}
+
+model CiCompetitor {
+  id              String   @id @default(cuid())
+  name            String
+  domain          String?
+  description     String?
+  founded         String?
+  hq              String?
+  teamSize        String?  @map("team_size")
+  fundingRound    String?  @map("funding_round")
+  fundingAmount   String?  @map("funding_amount")
+  fundingInvestors String[] @default([]) @map("funding_investors")
+  fundingDate     String?  @map("funding_date")
+  keyLeaders      Json?    @map("key_leaders")
+  whatTheyDo      String?  @map("what_they_do")
+  recentMoves     Json?    @map("recent_moves")
+  swot            Json?
+  threatLevel     String   @default("Direct") @map("threat_level")
+  confidenceScore Float?   @map("confidence_score")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  reportId        String   @map("report_id")
+  report          CiReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@map("ci_competitors")
+}
+
+model AgentRun {
+  id         String   @id @default(cuid())
+  agentName  String   @map("agent_name")
+  status     String   @default("running")
+  input      Json?
+  output     Json?
+  tokens     Int?
+  cost       Float?
+  durationMs Int?     @map("duration_ms")
+  error      String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("agent_runs")
+}
+
+model AgentConfig {
+  id         String   @id @default(cuid())
+  agentName  String   @unique @map("agent_name")
+  model      String   @default("claude-haiku-4-5-20251001")
+  maxTokens  Int      @default(2000) @map("max_tokens")
+  enabled    Boolean  @default(true)
+  config     Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("agent_configs")
+}
